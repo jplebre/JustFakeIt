@@ -1,4 +1,8 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Text.RegularExpressions;
 
@@ -53,7 +57,33 @@ namespace JustFakeIt
 
         public static bool MatchesActualBody(this HttpRequestExpectation expected, string actualBody)
         {
-            return string.IsNullOrEmpty(expected.Body) || actualBody.Equals(expected.Body);
+            return string.IsNullOrEmpty(expected.Body) || actualBody.Equals(expected.Body) || expected.JsonKeyValuesMatch(actualBody);
+        }
+
+        public static bool JsonKeyValuesMatch(this string expectedBody, string actualBody)
+        {
+            JObject expectedJObject = JsonConvert.DeserializeObject<JObject>(expectedBody);
+            JObject actualJObject = JsonConvert.DeserializeObject<JObject>(actualBody);
+
+            if (!JToken.DeepEquals(expectedJObject, actualJObject))
+            {
+                foreach (KeyValuePair<string, JToken> expectedProperty in expectedJObject)
+                {
+                    JProperty actualProperty = actualJObject.Property(expectedProperty.Key);
+
+                    if (!JToken.DeepEquals(expectedProperty.Value, actualProperty.Value))
+                    {
+                        if (JsonKeyValuesMatch(expectedProperty.Value.ToString(), actualProperty.Value.ToString())) return true;
+                        Debug.WriteLine($"Value don't match for key {expectedProperty.Key}.");
+                        Debug.WriteLine($"Expected { expectedProperty.Value} but got {actualProperty.Value}");
+                        return false;
+                    }
+                }
+            }
+            else
+            {
+                return true;
+            }
         }
     }
 }

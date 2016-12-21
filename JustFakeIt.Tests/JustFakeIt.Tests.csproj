@@ -88,6 +88,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="FakeServerJsonComparisonScenarios.cs" />
     <Compile Include="FakeServerScenarios.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
